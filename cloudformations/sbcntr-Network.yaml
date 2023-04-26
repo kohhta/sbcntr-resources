@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "AWS container study -- Network"
+
+Parameters:
+  ProjectName:
+    Description: Project Name
+    Type: String
+    Default: sbcntr
+
+Mappings:
+  CidrBlock:
+    fenrir:
+      global1: 42.125.229.42/32
+      global2: 137.83.213.180/32
+      global3: 137.83.213.197/32
+      global4: 134.238.7.18/32
+      global5: 134.238.7.37/32
+      global6: 137.83.213.182/32
+      global7: 208.127.111.171/32
+
+Resources:
+  # Security Group
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+  # Security Group Ingress
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
+
+  # Ingress SG
+  SecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Ingress
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-ingress-sg" }]
+  SecurityGroupIngressIngressSSHFromFenrir1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Fenrir IP
+      GroupId: !GetAtt SecurityGroupIngress.GroupId
+      CidrIp: !FindInMap [CidrBlock, fenrir, global1]
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+  SecurityGroupIngressIngressSSHFromFenrir2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Fenrir IP
+      GroupId: !GetAtt SecurityGroupIngress.GroupId
+      CidrIp: !FindInMap [CidrBlock, fenrir, global2]
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+  SecurityGroupIngressIngressSSHFromFenrir3:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Fenrir IP
+      GroupId: !GetAtt SecurityGroupIngress.GroupId
+      CidrIp: !FindInMap [CidrBlock, fenrir, global4]
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+  SecurityGroupIngressIngressSSHFromFenrir5:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Fenrir IP
+      GroupId: !GetAtt SecurityGroupIngress.GroupId
+      CidrIp: !FindInMap [CidrBlock, fenrir, global5]
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+  SecurityGroupIngressIngressSSHFromFenrir6:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Fenrir IP
+      GroupId: !GetAtt SecurityGroupIngress.GroupId
+      CidrIp: !FindInMap [CidrBlock, fenrir, global6]
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+  SecurityGroupIngressIngressSSHFromFenrir7:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Fenrir IP
+      GroupId: !GetAtt SecurityGroupIngress.GroupId
+      CidrIp: !FindInMap [CidrBlock, fenrir, global7]
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+
+  # Management SG
+  SecurityGroupManagement:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Management
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-management-sg" }]
+
+  # Frontend Container SG
+  SecurityGroupFrontendContainer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Frontend
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-frontend-container-sg" }]
+  SecurityGroupIngressFrontendContainerFromIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Ingress
+      GroupId: !GetAtt SecurityGroupFrontendContainer.GroupId
+      SourceSecurityGroupId: !Ref SecurityGroupIngress
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+
+  # Internal ALB SG
+  SecurityGroupInternalALB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Internal ALB
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-inertnal-alb-sg" }]
+  SecurityGroupIngressInternalALBFromFrontendContainer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Frontend
+      GroupId: !GetAtt SecurityGroupInternalALB.GroupId
+      SourceSecurityGroupId: !Ref SecurityGroupFrontendContainer
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+  SecurityGroupIngressInternalALBFromManagemant:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Managemant
+      GroupId: !GetAtt SecurityGroupInternalALB.GroupId
+      SourceSecurityGroupId: !Ref SecurityGroupManagement
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+
+  # Backend Container SG
+  SecurityGroupBackendContainer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Backend
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-backend-container-sg" }]
+  SecurityGroupIngressBackendContainerFromInternalALB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Internal ALB
+      GroupId: !GetAtt SecurityGroupBackendContainer.GroupId
+      SourceSecurityGroupId: !Ref SecurityGroupInternalALB
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+
+  # Database SG
+  SecurityGroupDB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for DB
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-db-sg" }]
+  SecurityGroupIngressDBFromBackendContainer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Backend
+      GroupId: !GetAtt SecurityGroupDB.GroupId
+      SourceSecurityGroupId: !Ref SecurityGroupBackendContainer
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+  SecurityGroupIngressDBFromManagemant:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH From Managemant
+      GroupId: !GetAtt SecurityGroupDB.GroupId
+      SourceSecurityGroupId: !Ref SecurityGroupManagement
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
