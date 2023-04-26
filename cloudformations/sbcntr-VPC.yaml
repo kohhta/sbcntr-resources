@@ -1,0 +1,259 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "AWS container study -- VPC"
+
+Parameters:
+  ProjectName:
+    Description: Project Name
+    Type: String
+    Default: sbcntr
+
+  AZ1a:
+    Description: Availability Zone 1a
+    Type: "AWS::EC2::AvailabilityZone::Name"
+
+  AZ1c:
+    Description: Availability Zone 1c
+    Type: "AWS::EC2::AvailabilityZone::Name"
+
+Mappings:
+  VpcMappings:
+    vpc:
+      VpcCidr: 10.0.0.0/16
+      # Availability Zone 1a
+      PublicSubnetCidrAZ1aForIngress: 10.0.0.0/24
+      PublicSubnetCidrAZ1aForManagement: 10.0.240.0/24
+      PrivateSubnetCidrAZ1aForContainer: 10.0.8.0/24
+      PrivateSubnetCidrAZ1aForDB: 10.0.16.0/24
+      # Availability Zone 1c
+      PublicSubnetCidrAZ1cForIngress: 10.0.1.0/24
+      PublicSubnetCidrAZ1cForManagement: 10.0.241.0/24
+      PrivateSubnetCidrAZ1cForContainer: 10.0.9.0/24
+      PrivateSubnetCidrAZ1cForDB: 10.0.17.0/24
+
+Resources:
+  # VPC
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "VpcCidr"]
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-vpc" }]
+
+  # Subnet
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
+
+  # Availability Zone 1a
+  PublicSubnetAZ1aForIngress:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1a
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PublicSubnetCidrAZ1aForIngress"]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1a
+            - SubName: subnet-public-ingress
+
+  PublicSubnetAZ1aForManagement:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1a
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PublicSubnetCidrAZ1aForManagement"]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1a
+            - SubName: subnet-public-management
+
+  PrivateSubnetAZ1aForContainer:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1a
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PrivateSubnetCidrAZ1aForContainer"]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1a
+            - SubName: subnet-private-container
+
+  PrivateSubnetAZ1aForDB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1a
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PrivateSubnetCidrAZ1aForDB"]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1a
+            - SubName: subnet-private-db
+
+  # Availability Zone 1c
+  PublicSubnetAZ1cForIngress:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1c
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PublicSubnetCidrAZ1cForIngress"]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1c
+            - SubName: subnet-public-ingress
+
+  PublicSubnetAZ1cForManagement:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1c
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PublicSubnetCidrAZ1cForManagement"]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1c
+            - SubName: subnet-public-management
+
+  PrivateSubnetAZ1cForContainer:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1c
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PrivateSubnetCidrAZ1cForContainer"]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1c
+            - SubName: subnet-private-container
+
+  PrivateSubnetAZ1cForDB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AZ1c
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ["VpcMappings", "vpc", "PrivateSubnetCidrAZ1cForDB"]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - ${ProjectName}-${SubName}-1c
+            - SubName: subnet-private-db
+
+  # Route Table
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-routetable.html
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public-rtb" }]
+
+  PrivateContainerRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-private-container-rtb" }]
+
+  PrivateDBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-private-db-rtb" }]
+
+  # Subnet Route Table Association
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnetroutetableassociation.html
+  PublicSubnetAZ1aForIngressRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAZ1aForIngress
+
+  PublicSubnetAZ1cForIngressRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAZ1cForIngress
+
+  PublicSubnetAZ1aForManagementRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAZ1aForManagement
+
+  PublicSubnetAZ1cForManagementRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAZ1cForManagement
+
+  PrivateSubnetAZ1aForContainerRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateContainerRouteTable
+      SubnetId: !Ref PrivateSubnetAZ1aForContainer
+
+  PrivateSubnetAZ1cForContainerRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateContainerRouteTable
+      SubnetId: !Ref PrivateSubnetAZ1cForContainer
+
+  PrivateSubnetAZ1aForDBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateDBRouteTable
+      SubnetId: !Ref PrivateSubnetAZ1aForDB
+
+  PrivateSubnetAZ1cForDBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateDBRouteTable
+      SubnetId: !Ref PrivateSubnetAZ1cForDB
+
+  # Internet Gateway
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-igw" }]
+
+  # Internet Gateway Egress Only
+  # https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-egressonlyinternetgateway.html
+  EgressOnlyInternetGateway:
+    Type: AWS::EC2::EgressOnlyInternetGateway
+    Properties:
+      VpcId: !Ref VPC
+
+  # VPC Gateway Attachment
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  # Route
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
+  PublicRouteToIGW:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${ProjectName}-vpc-id
