@@ -185,3 +185,68 @@ Resources:
       IpProtocol: tcp
       FromPort: 3306
       ToPort: 3306
+
+  ## Generate security groups for VPC endpoints
+  sbcntrSgEgress:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group of VPC Endpoint
+      GroupName: egress
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      Tags:
+        - Key: Name
+          Value: sbcntr-sg-vpce
+      VpcId:
+        Fn::ImportValue: !Join ['-', [!Ref ProjectName, "vpc-id"]]
+
+  ### Back container -> VPC endpoint
+  sbcntrSgVpceFromSgBackContainerTCP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: HTTPS for Container App
+      FromPort: 443
+      GroupId:
+        Fn::GetAtt:
+          - sbcntrSgEgress
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - SecurityGroupBackendContainer
+          - GroupId
+      ToPort: 443
+  ### Front container -> VPC endpoint
+  sbcntrSgVpceFromSgFrontContainerTCP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: HTTPS for Front Container App
+      FromPort: 443
+      GroupId:
+        Fn::GetAtt:
+          - sbcntrSgEgress
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - SecurityGroupFrontendContainer
+          - GroupId
+      ToPort: 443
+  ### Management Server -> VPC endpoint
+  sbcntrSgVpceFromSgManagementTCP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: HTTPS for management server
+      FromPort: 443
+      GroupId:
+        Fn::GetAtt:
+          - sbcntrSgEgress
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - SecurityGroupManagement
+          - GroupId
+      ToPort: 443

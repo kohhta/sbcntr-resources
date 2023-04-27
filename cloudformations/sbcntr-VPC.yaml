@@ -98,6 +98,21 @@ Resources:
             - ${ProjectName}-${SubName}-1a
             - SubName: subnet-private-db
 
+  # Setup VPC endpoints
+  ## Private subnet for VPC endpoints (Egress communication)
+  sbcntrSubnetPrivateEgress1A:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.248.0/24
+      AvailabilityZone: !Ref AZ1a
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: sbcntr-subnet-private-egress-1a
+        - Key: Type
+          Value: Isolated
+
   # Availability Zone 1c
   PublicSubnetAZ1cForIngress:
     Type: AWS::EC2::Subnet
@@ -150,6 +165,21 @@ Resources:
           Value: !Sub
             - ${ProjectName}-${SubName}-1c
             - SubName: subnet-private-db
+
+  # Setup VPC endpoints
+  ## Private subnet for VPC endpoints (Egress communication)
+  sbcntrSubnetPrivateEgress1C:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.249.0/24
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref AZ1c
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: sbcntr-subnet-private-egress-1c
+        - Key: Type
+          Value: Isolated
 
   # Route Table
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-routetable.html
