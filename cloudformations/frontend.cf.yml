@@ -6,10 +6,13 @@ Parameters:
   Prefix:
     Default: sbcntr
     Type: String
+  Suffix:
+    Default: koyama
+    Type: String
   VpcId:
     Description : Input 'sbcntr' VPC ID
     Type: AWS::EC2::VPC::Id
-# ALB 
+# ALB
   ALBSecurityGroupId:
     Description: Input 'ingress' SecurityGroup ID
     Type: AWS::EC2::SecurityGroup::Id
@@ -31,14 +34,14 @@ Resources:
   sbcntrECSClusterFrontend:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub "${Prefix}-frontend-cluster"
+      ClusterName: !Sub "${Prefix}-frontend-cluster-${Suffix}"
   sbcntrTaskDefinitionFrontend:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${Prefix}-frontend-def"
+      Family: !Sub "${Prefix}-frontend-def-${Suffix}"
       ContainerDefinitions:
         - Name: app
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/sbcntr-frontend:v1"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/sbcntr-frontend-${Suffix}:v1"
           Essential: true
           Cpu: 256
           MemoryReservation: 512
@@ -55,8 +58,8 @@ Resources:
               Value: !Sub "http://${BackendHost}"
           LogConfiguration:
               LogDriver: awslogs
-              Options: 
-                awslogs-group: !Sub "/ecs/${Prefix}-frontend-def"
+              Options:
+                awslogs-group: !Sub "/ecs/${Prefix}-frontend-def-${Suffix}"
                 awslogs-region: !Ref AWS::Region
                 awslogs-stream-prefix: ecs
       Cpu: 512
@@ -68,15 +71,15 @@ Resources:
   sbcntrCloudWatchLogsFrontend:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/sbcntr-frontend-def
+      LogGroupName: !Sub "/ecs/sbcntr-frontend-def-${Suffix}"
       RetentionInDays: 14
     UpdateReplacePolicy: Retain
 
-  ############### Application Load Balancer ###############    
+  ############### Application Load Balancer ###############
   sbcntrAlbFrontend:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub "${Prefix}-alb-ingress-frontend"
+      Name: !Sub "${Prefix}alb-ingress-front-${Suffix}"
       Type: application
       Scheme: internet-facing
       SecurityGroups:
@@ -90,7 +93,7 @@ Resources:
   sbcntrTargetGroupFrontend:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub "${Prefix}-tg-frontend"
+      Name: !Sub "${Prefix}-tg-frontend-${Suffix}"
       Port: 80
       Protocol: HTTP
       TargetType: ip
@@ -99,16 +102,15 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
       UnhealthyThresholdCount: 2
-      Matcher: 
+      Matcher:
         HttpCode: 200
       VpcId: !Ref VpcId
   sbcntrFrontendListener1:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-        DefaultActions: 
+        DefaultActions:
           - TargetGroupArn: !Ref sbcntrTargetGroupFrontend
             Type: forward
         LoadBalancerArn: !Ref sbcntrAlbFrontend
         Port: 80
         Protocol: HTTP
-
