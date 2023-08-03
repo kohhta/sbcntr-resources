@@ -2,19 +2,19 @@ version: 0.2
 
 env:
     variables:
-        AWS_REGION_NAME: ap-northeast-1
-        ECR_REPOSITORY_NAME: sbcntr-backend
+        AWS_REGION_NAME: us-west-2
+        ECR_REPOSITORY_NAME: sbcntr-backend-koyama
         DOCKER_BUILDKIT: "1"
-    
+
 phases:
     install:
         runtime-versions:
             docker: 19
 
-    pre_build: 
+    pre_build:
         commands:
             - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-            - aws ecr --region ap-northeast-1 get-login-password | docker login --username AWS --password-stdin https://${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/sbcntr-backend
+            - aws ecr --region us-west-2 get-login-password | docker login --username AWS --password-stdin https://${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/sbcntr-backend-koyama
             - REPOSITORY_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_NAME}.amazonaws.com/${ECR_REPOSITORY_NAME}
             # タグ名にGitのコミットハッシュを利用
             - IMAGE_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
@@ -28,11 +28,11 @@ phases:
             #- DOCKLE_VERSION=$(curl -sS https://api.github.com/repos/goodwithtech/dockle/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
             - DOCKLE_VERSION=0.3.15
             - rpm -ivh https://github.com/goodwithtech/dockle/releases/download/v${DOCKLE_VERSION}/dockle_${DOCKLE_VERSION}_Linux-64bit.rpm
-    
+
     build:
         commands:
             - docker image build -t ${REPOSITORY_URI}:${IMAGE_TAG} .
-    
+
     post_build:
         commands:
             # trivyによるイメージスキャン(結果格納用)

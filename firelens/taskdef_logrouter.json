@@ -92,3 +92,18 @@
   "networkMode": "awsvpc",
   "cpu": "512"
 }
+
+
+
+"startTimeout": null,
+"firelensConfiguration": {
+    "type": "fluentbit",
+
+    "options": {
+      "config-file-type": "file",
+      "config-file-value": "/fluent-bit/custom.conf"
+  }
+},
+
+"options": null
+"options": {}

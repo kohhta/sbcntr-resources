@@ -103,3 +103,41 @@ aws ecr get-login-password --region us-west-2 | docker login --username AWS --pa
 docker image push ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/sbcntr-frontend-koyama:dbv1
 
 ## p340
+
+## p352
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+
+aws ecr --region us-west-2 get-login-password | docker login --username AWS --password-stdin https://526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama
+
+docker image tag golang:1.16.8-alpine3.13 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:golang1.16.8-alpine3.13
+
+docker image push 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:golang1.16.8-alpine3.13
+
+FROM 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:golang1.16.8-alpine3.13 AS build-env
+
+## p377
+curl http://internal-sbcntr-alb-internal-koyama-904403373.us-west-2.elb.amazonaws.com:80/v1/Items
+
+
+
+# 396
+
+docker image build -t sbcntr-log-router-koyama .
+
+aws ecr --region us-west-2 get-login-password | docker login --username AWS --password-stdin https://526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama
+
+docker image tag sbcntr-log-router-koyama:latest 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:log-router
+
+docker image push 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:log-router
+
+
+# p411
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+
+aws ecr --region us-west-2 get-login-password | docker login --username AWS --password-stdin https://526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama
+
+docker image tag fargate-bastion:latest 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:bastion
+
+docker image push 526269109168.dkr.ecr.us-west-2.amazonaws.com/sbcntr-base-koyama:bastion
+
+mysql -h sbcntr-db.cluster-cls6ilk0ixy8.us-west-2.rds.amazonaws.com -u migrate -p

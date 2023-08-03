@@ -1,13 +1,13 @@
 {
-  "executionRoleArn": "arn:aws:iam::[aws_account_id]:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::526269109168:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "logConfiguration": {
         "logDriver": "awslogs",
         "secretOptions": null,
         "options": {
-          "awslogs-group": "/ecs/sbcntr-backend-def",
-          "awslogs-region": "ap-northeast-1",
+          "awslogs-group": "/ecs/sbcntr-backend-def-koyama",
+          "awslogs-region": "us-west-2",
           "awslogs-stream-prefix": "ecs"
         }
       },
@@ -23,19 +23,19 @@
       "environment": [],
       "secrets": [
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:[aws_account_id]:secret:[mysql_secret_alias]:host::",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:526269109168:secret:sbcntr/mysql/koyama-k5VW7d:host::",
           "name": "DB_HOST"
         },
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:[aws_account_id]:secret:[mysql_secret_alias]:dbname::",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:526269109168:secret:sbcntr/mysql/koyama-k5VW7d:dbname::",
           "name": "DB_NAME"
         },
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:[aws_account_id]:secret:[mysql_secret_alias]:password::",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:526269109168:secret:sbcntr/mysql/koyama-k5VW7d:password::",
           "name": "DB_PASSWORD"
         },
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:[aws_account_id]:secret:[mysql_secret_alias]:username::",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:526269109168:secret:sbcntr/mysql/koyama-k5VW7d:username::",
           "name": "DB_USERNAME"
         }
       ],
@@ -48,7 +48,11 @@
   ],
   "memory": "1024",
   "taskRoleArn": null,
-  "family": "sbcntr-backend-def",
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "family": "sbcntr-backend-def-koyama",
   "requiresCompatibilities": ["FARGATE"],
   "networkMode": "awsvpc",
   "cpu": "512"
